@@ -1,0 +1,9 @@
+{
+  "name": "考云考试管理",
+  "short_name": "考云",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7f6",
+  "theme_color": "#166b56",
+  "icons": []
+}

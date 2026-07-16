@@ -1,0 +1,21 @@
+{
+  "name": "kaoyun-lan-exam",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node dev.js",
+    "server": "node server.js",
+    "build": "vite build",
+    "start": "node server.js --production"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "lucide-react": "latest",
+    "qrcode": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {}
+}

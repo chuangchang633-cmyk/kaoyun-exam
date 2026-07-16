@@ -1,0 +1,244 @@
+{
+  "exams": [
+    {
+      "title": "1",
+      "description": "",
+      "duration": 30,
+      "passScore": 60,
+      "questions": [
+        {
+          "id": "q-a63e74ae",
+          "type": "single",
+          "title": "1",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "answer": [
+            0
+          ]
+        }
+      ],
+      "id": "exam-409905f4",
+      "createdAt": "2026-07-15T06:07:37.639Z",
+      "status": "active"
+    },
+    {
+      "title": "五种人考试",
+      "description": "",
+      "duration": 30,
+      "passScore": 80,
+      "questions": [
+        {
+          "id": "q-24c1c909",
+          "type": "single",
+          "title": "11",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "answer": [
+            0
+          ]
+        },
+        {
+          "id": "q-fe95cad6",
+          "type": "single",
+          "title": "2",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "answer": [
+            1
+          ]
+        }
+      ],
+      "id": "exam-a145ac2f",
+      "createdAt": "2026-07-15T02:02:47.763Z",
+      "status": "active"
+    },
+    {
+      "title": "五种人",
+      "description": "",
+      "duration": 30,
+      "passScore": 80,
+      "questions": [
+        {
+          "id": "new-q1",
+          "type": "single",
+          "title": "请在这里填写题目",
+          "options": [
+            "选项 A",
+            "选项 B",
+            "选项 C",
+            "选项 D"
+          ],
+          "answer": [
+            0
+          ]
+        }
+      ],
+      "id": "exam-4b498161",
+      "createdAt": "2026-07-15T01:26:34.164Z",
+      "status": "ended"
+    },
+    {
+      "id": "exam-safety-01",
+      "title": "2026 年度生产安全知识考试",
+      "description": "共 5 题，满分 100 分，提交后自动判分。",
+      "duration": 30,
+      "passScore": 60,
+      "status": "ended",
+      "createdAt": "2026-07-14T01:30:00.000Z",
+      "questions": [
+        {
+          "id": "q1",
+          "type": "single",
+          "title": "发现设备异常时，首先应该怎么做？",
+          "options": [
+            "继续运行并观察",
+            "立即停机并按流程上报",
+            "自行拆卸检修",
+            "等待交接班处理"
+          ],
+          "answer": [
+            1
+          ]
+        },
+        {
+          "id": "q2",
+          "type": "multiple",
+          "title": "进入生产区域前，应完成哪些准备？",
+          "options": [
+            "规范佩戴防护用品",
+            "了解疏散通道",
+            "关闭手机",
+            "确认现场风险提示"
+          ],
+          "answer": [
+            0,
+            1,
+            3
+          ]
+        },
+        {
+          "id": "q3",
+          "type": "single",
+          "title": "灭火器压力表指针位于哪个区域表示压力正常？",
+          "options": [
+            "红色区域",
+            "绿色区域",
+            "黄色区域",
+            "任意区域"
+          ],
+          "answer": [
+            1
+          ]
+        },
+        {
+          "id": "q4",
+          "type": "single",
+          "title": "发生人员触电时，正确的第一步是？",
+          "options": [
+            "直接用手拉开伤员",
+            "立即切断电源",
+            "给伤员喝水",
+            "等待专业人员到场"
+          ],
+          "answer": [
+            1
+          ]
+        },
+        {
+          "id": "q5",
+          "type": "multiple",
+          "title": "以下哪些属于事故隐患上报信息？",
+          "options": [
+            "发生位置",
+            "现场照片",
+            "隐患描述",
+            "发现时间"
+          ],
+          "answer": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "exam-service-02",
+      "title": "门店服务规范月度测评",
+      "description": "门店服务人员月度知识复盘。",
+      "duration": 20,
+      "passScore": 80,
+      "status": "draft",
+      "createdAt": "2026-07-10T06:00:00.000Z",
+      "questions": []
+    }
+  ],
+  "submissions": [
+    {
+      "id": "s1",
+      "examId": "exam-safety-01",
+      "name": "陈雨",
+      "department": "生产一部",
+      "score": 80,
+      "passed": true,
+      "durationSeconds": 612,
+      "submittedAt": "2026-07-14T02:13:00.000Z"
+    },
+    {
+      "id": "s2",
+      "examId": "exam-safety-01",
+      "name": "赵明",
+      "department": "设备组",
+      "score": 100,
+      "passed": true,
+      "durationSeconds": 488,
+      "submittedAt": "2026-07-14T02:17:00.000Z"
+    },
+    {
+      "id": "s3",
+      "examId": "exam-safety-01",
+      "name": "李晓",
+      "department": "生产二部",
+      "score": 40,
+      "passed": false,
+      "durationSeconds": 821,
+      "submittedAt": "2026-07-14T02:25:00.000Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "c-8da99126",
+      "name": "陈雨",
+      "department": "生产一部",
+      "note": "安全员",
+      "createdAt": "2026-07-14T02:13:00.000Z"
+    },
+    {
+      "id": "c-a77c7abf",
+      "name": "赵明",
+      "department": "设备组",
+      "note": "设备点检",
+      "createdAt": "2026-07-14T02:17:00.000Z"
+    },
+    {
+      "id": "c-bde3d0f4",
+      "name": "李晓",
+      "department": "生产二部",
+      "note": "需补考",
+      "createdAt": "2026-07-14T02:25:00.000Z"
+    }
+  ]
+}
