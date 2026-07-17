@@ -18,7 +18,6 @@ RUN npm ci --omit=dev
 
 COPY --from=build /app/dist ./dist
 COPY server.js ./server.js
-COPY data ./data
 
 EXPOSE 8787
 CMD ["node", "server.js", "--production"]
