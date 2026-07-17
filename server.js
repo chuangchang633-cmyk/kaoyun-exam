@@ -335,7 +335,12 @@ const server = http.createServer(async (req, res) => {
     if (production) {
       const dist = path.join(root, 'dist')
       let file = path.join(dist, url.pathname === '/' ? 'index.html' : url.pathname)
-      try { if (!(await stat(file)).isFile()) file = path.join(dist, 'index.html') } catch { file = path.join(dist, 'index.html') }
+      try {
+        if (!(await stat(file)).isFile()) file = path.join(dist, 'index.html')
+      } catch {
+        const rootAsset = ['/sw.js', '/manifest.webmanifest'].includes(url.pathname) ? path.join(root, url.pathname.slice(1)) : ''
+        try { file = rootAsset && (await stat(rootAsset)).isFile() ? rootAsset : path.join(dist, 'index.html') } catch { file = path.join(dist, 'index.html') }
+      }
       res.writeHead(200, { 'Content-Type': mime(file) })
       return res.end(await readFile(file))
     }
