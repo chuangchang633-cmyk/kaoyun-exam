@@ -18,6 +18,8 @@ RUN npm ci --omit=dev
 
 COPY --from=build /app/dist ./dist
 COPY server.js ./server.js
+COPY sw.js ./sw.js
+COPY manifest.webmanifest ./manifest.webmanifest
 
 EXPOSE 8787
 CMD ["node", "server.js", "--production"]

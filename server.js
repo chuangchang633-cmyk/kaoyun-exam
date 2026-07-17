@@ -27,6 +27,16 @@ const dataDir = path.join(root, 'data')
 const dataFile = path.join(dataDir, 'db.json')
 const clients = new Set()
 const sessions = new Map()
+const fallbackServiceWorker = "self.addEventListener('install', () => self.skipWaiting())\nself.addEventListener('activate', event => event.waitUntil(self.clients.claim()))\n"
+const fallbackManifest = JSON.stringify({
+  name: '考云考试管理',
+  short_name: '考云',
+  start_url: '/',
+  display: 'standalone',
+  background_color: '#f5f7f6',
+  theme_color: '#166b56',
+  icons: []
+}, null, 2)
 
 const seed = {
   exams: [
@@ -174,6 +184,16 @@ function upsertCandidate(db, input) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`)
   try {
+    if (url.pathname === '/sw.js') {
+      res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' })
+      return res.end(fallbackServiceWorker)
+    }
+
+    if (url.pathname === '/manifest.webmanifest') {
+      res.writeHead(200, { 'Content-Type': 'application/manifest+json; charset=utf-8', 'Cache-Control': 'no-store' })
+      return res.end(fallbackManifest)
+    }
+
     if (url.pathname === '/api/events') {
       if (!requireAuth(req, res)) return
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })
