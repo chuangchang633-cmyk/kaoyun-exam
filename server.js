@@ -11,6 +11,18 @@ const port = Number(process.env.PORT || 8787)
 const publicOrigin = (process.env.PUBLIC_ORIGIN || '').replace(/\/$/, '')
 const adminUser = process.env.ADMIN_USER || 'admin'
 const adminPass = process.env.ADMIN_PASS || '123456'
+const operators = (() => {
+  try {
+    const parsed = JSON.parse(process.env.ADMIN_USERS || '[]')
+    if (Array.isArray(parsed) && parsed.length) return parsed
+  } catch {}
+  return [
+    { username: adminUser, password: adminPass, name: '管理员', role: '系统管理员' },
+    { username: 'invigilator', password: adminPass, name: '监考员', role: '考试现场管理' },
+    { username: 'analyst', password: adminPass, name: '数据员', role: '成绩汇总查看' }
+  ]
+})()
+const safeOperators = operators.map(({ password, ...operator }) => operator)
 const dataDir = path.join(root, 'data')
 const dataFile = path.join(dataDir, 'db.json')
 const clients = new Set()
@@ -120,6 +132,11 @@ function isAuthed(req) {
   return Boolean(sid && sessions.has(sid))
 }
 
+function currentSession(req) {
+  const sid = cookies(req).ky_session
+  return sid ? sessions.get(sid) : null
+}
+
 function requireAuth(req, res) {
   if (isAuthed(req)) return true
   json(res, 401, { error: '请先登录管理员账号' })
@@ -168,11 +185,12 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === '/api/login' && req.method === 'POST') {
       const input = await body(req)
-      if (input.username !== adminUser || input.password !== adminPass) return json(res, 401, { error: '账号或密码不正确' })
+      const operator = operators.find(item => item.username === input.username && item.password === input.password)
+      if (!operator) return json(res, 401, { error: '账号或密码不正确' })
       const sid = crypto.randomUUID()
-      sessions.set(sid, { createdAt: Date.now() })
+      sessions.set(sid, { createdAt: Date.now(), username: operator.username })
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Set-Cookie': `ky_session=${encodeURIComponent(sid)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800` })
-      return res.end(JSON.stringify({ ok: true, user: adminUser }))
+      return res.end(JSON.stringify({ ok: true, user: safeOperators.find(item => item.username === operator.username) }))
     }
 
     if (url.pathname === '/api/logout' && req.method === 'POST') {
@@ -183,13 +201,25 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname === '/api/session' && req.method === 'GET') {
-      return json(res, 200, { authenticated: isAuthed(req), user: isAuthed(req) ? adminUser : null })
+      const session = currentSession(req)
+      return json(res, 200, { authenticated: Boolean(session), user: session ? safeOperators.find(item => item.username === session.username) : null, operators: safeOperators })
+    }
+
+    if (url.pathname === '/api/session/operator' && req.method === 'POST') {
+      if (!requireAuth(req, res)) return
+      const session = currentSession(req)
+      const input = await body(req)
+      const operator = safeOperators.find(item => item.username === input.username)
+      if (!operator) return json(res, 404, { error: '登录人员不存在' })
+      session.username = operator.username
+      return json(res, 200, { ok: true, user: operator })
     }
 
     if (url.pathname === '/api/bootstrap' && req.method === 'GET') {
       if (!requireAuth(req, res)) return
       const db = await loadDb()
-      return json(res, 200, { ...db, lanAddresses: lanAddresses(), port, production, publicOrigin: resolvePublicOrigin(req) })
+      const session = currentSession(req)
+      return json(res, 200, { ...db, lanAddresses: lanAddresses(), port, production, publicOrigin: resolvePublicOrigin(req), operators: safeOperators, currentUser: safeOperators.find(item => item.username === session?.username) })
     }
 
     if (url.pathname === '/api/exams' && req.method === 'POST') {

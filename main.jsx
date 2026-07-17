@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import QRCode from 'qrcode'
 import {
   Activity, BarChart3, BookOpenCheck, Check, ChevronDown, ChevronLeft, ChevronRight,
-  CircleHelp, Clock3, Copy, Download, FilePenLine, GraduationCap, LayoutDashboard,
+  CircleHelp, Clock3, Copy, Download, Eye, FilePenLine, GraduationCap, LayoutDashboard,
   LockKeyhole, LogOut, Menu, Plus, QrCode, RefreshCw, Save, Search, Send, Settings,
   ShieldCheck, SquarePen, Trash2, Upload, UserPlus, Users, X
 } from 'lucide-react'
@@ -33,13 +33,16 @@ function Empty({ children }) {
   return <div className="empty"><CircleHelp size={26} /><p>{children}</p></div>
 }
 
-function Sidebar({ active, setActive, open, close, onLogout }) {
+function Sidebar({ active, setActive, open, close, onLogout, user, operators, onSwitchUser }) {
+  const [operatorOpen, setOperatorOpen] = useState(false)
   const nav = [
     ['dashboard', LayoutDashboard, '概览'],
     ['exams', FilePenLine, '考试管理'],
+    ['papers', BookOpenCheck, '考试试卷'],
     ['results', BarChart3, '成绩汇总'],
     ['candidates', Users, '考生管理']
   ]
+  const current = user || operators[0] || { name: '管理员', role: '账号保护模式', username: 'admin' }
   return <>
     {open ? <button className="sidebar-scrim" onClick={close} aria-label="关闭菜单" /> : null}
     <aside className={`sidebar ${open ? 'open' : ''}`}>
@@ -48,7 +51,20 @@ function Sidebar({ active, setActive, open, close, onLogout }) {
       <div className="sidebar-bottom">
         <button><Settings size={18} /><span>系统设置</span></button>
         <button onClick={onLogout}><LogOut size={18} /><span>退出登录</span></button>
-        <div className="operator"><span>管</span><div><strong>管理员</strong><small>账号保护模式</small></div><ChevronDown size={16} /></div>
+        <div className="operator-wrap">
+          <button className={`operator ${operatorOpen ? 'open' : ''}`} onClick={() => setOperatorOpen(value => !value)} aria-expanded={operatorOpen}>
+            <span>{current.name?.slice(0, 1) || '管'}</span>
+            <div><strong>{current.name || current.username}</strong><small>{current.role || '账号保护模式'}</small></div>
+            <ChevronDown size={16} />
+          </button>
+          {operatorOpen ? <div className="operator-menu">
+            {operators.map(operator => <button key={operator.username} className={operator.username === current.username ? 'active' : ''} onClick={() => { onSwitchUser(operator.username); setOperatorOpen(false) }}>
+              <span>{operator.name?.slice(0, 1) || operator.username.slice(0, 1).toUpperCase()}</span>
+              <div><strong>{operator.name || operator.username}</strong><small>{operator.role || operator.username}</small></div>
+              {operator.username === current.username ? <Check size={16} /> : null}
+            </button>)}
+          </div> : null}
+        </div>
       </div>
     </aside>
   </>
@@ -87,13 +103,44 @@ function Dashboard({ exams, submissions, onNavigate, onQr }) {
   </div>
 }
 
-function Exams({ exams, submissions, onQr, onToggle, onCreate, onDelete }) {
+function Exams({ exams, submissions, onQr, onToggle, onCreate, onDelete, onViewPaper }) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
   const filtered = exams.filter(item => item.title.includes(query) && (status === 'all' || item.status === status))
   return <div className="page"><div className="section-toolbar"><div className="search"><Search size={17} /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="搜索考试名称" /></div><div className="segmented"><button className={status === 'all' ? 'active' : ''} onClick={() => setStatus('all')}>全部</button><button className={status === 'active' ? 'active' : ''} onClick={() => setStatus('active')}>进行中</button><button className={status === 'draft' ? 'active' : ''} onClick={() => setStatus('draft')}>草稿</button></div></div>
-    <section className="panel no-padding"><div className="table-wrap"><table className="exam-table"><thead><tr><th>考试名称</th><th>状态</th><th>题目</th><th>参考人数</th><th>及格分</th><th>创建时间</th><th>操作</th></tr></thead><tbody>{filtered.map(exam => { const count = submissions.filter(item => item.examId === exam.id).length; return <tr key={exam.id}><td><div className="exam-name"><span><BookOpenCheck size={18} /></span><div><strong>{exam.title}</strong><small>{exam.description || '无考试说明'}</small></div></div></td><td><Status value={exam.status} /></td><td>{exam.questions.length} 题</td><td>{count} 人</td><td>{exam.passScore} 分</td><td>{fmtDate(exam.createdAt)}</td><td><div className="row-actions">{exam.status === 'active' ? <button className="icon-button" title="二维码" onClick={() => onQr(exam)}><QrCode size={17} /></button> : null}<button className="secondary small" onClick={() => onToggle(exam)}>{exam.status === 'active' ? '结束' : '发布'}</button><button className="icon-button danger" title="删除考试" onClick={() => onDelete(exam)}><Trash2 size={17} /></button></div></td></tr> })}</tbody></table></div>{!filtered.length ? <Empty>没有找到符合条件的考试</Empty> : null}</section>
+    <section className="panel no-padding"><div className="table-wrap"><table className="exam-table"><thead><tr><th>考试名称</th><th>状态</th><th>题目</th><th>参考人数</th><th>及格分</th><th>创建时间</th><th>操作</th></tr></thead><tbody>{filtered.map(exam => { const count = submissions.filter(item => item.examId === exam.id).length; return <tr key={exam.id}><td><div className="exam-name"><span><BookOpenCheck size={18} /></span><div><strong>{exam.title}</strong><small>{exam.description || '无考试说明'}</small></div></div></td><td><Status value={exam.status} /></td><td>{exam.questions.length} 题</td><td>{count} 人</td><td>{exam.passScore} 分</td><td>{fmtDate(exam.createdAt)}</td><td><div className="row-actions"><button className="icon-button" title="查看试卷" onClick={() => onViewPaper(exam)}><Eye size={17} /></button>{exam.status === 'active' ? <button className="icon-button" title="二维码" onClick={() => onQr(exam)}><QrCode size={17} /></button> : null}<button className="secondary small" onClick={() => onToggle(exam)}>{exam.status === 'active' ? '结束' : '发布'}</button><button className="icon-button danger" title="删除考试" onClick={() => onDelete(exam)}><Trash2 size={17} /></button></div></td></tr> })}</tbody></table></div>{!filtered.length ? <Empty>没有找到符合条件的考试</Empty> : null}</section>
     <button className="floating-create" onClick={onCreate}><Plus size={20} />新建考试</button>
+  </div>
+}
+
+const answerLetters = question => question.answer.map(item => String.fromCharCode(65 + item)).join('、')
+
+function PaperContent({ exam }) {
+  return <div className="paper-content">
+    <div className="paper-meta"><span><FilePenLine size={15} />{exam.questions.length} 道题</span><span><Clock3 size={15} />{exam.duration} 分钟</span><span><ShieldCheck size={15} />{exam.passScore} 分及格</span><Status value={exam.status} /></div>
+    {exam.description ? <p className="paper-desc">{exam.description}</p> : null}
+    <div className="paper-questions">{exam.questions.length ? exam.questions.map((question, index) => <article className="paper-question" key={question.id}>
+      <div className="paper-question-head"><span>第 {index + 1} 题</span><b>{question.type === 'multiple' ? '多选题' : '单选题'}</b></div>
+      <h3>{question.title}</h3>
+      <div className="paper-options">{question.options.map((option, optionIndex) => <div className={question.answer.includes(optionIndex) ? 'correct' : ''} key={`${question.id}-${optionIndex}`}><span>{String.fromCharCode(65 + optionIndex)}</span><p>{option}</p>{question.answer.includes(optionIndex) ? <Check size={15} /> : null}</div>)}</div>
+      <div className="paper-answer">正确答案：<strong>{answerLetters(question)}</strong></div>
+    </article>) : <Empty>这场考试还没有试题</Empty>}</div>
+  </div>
+}
+
+function PaperModal({ exam, onClose }) {
+  return <Modal onClose={onClose} wide><div className="modal-head"><div><h2>考试试卷</h2><p>{exam.title}</p></div><button className="icon-button" onClick={onClose}><X size={19} /></button></div><PaperContent exam={exam} /></Modal>
+}
+
+function Papers({ exams }) {
+  const [examId, setExamId] = useState(exams[0]?.id || '')
+  useEffect(() => { if (!examId && exams[0]) setExamId(exams[0].id) }, [examId, exams])
+  const current = exams.find(item => item.id === examId)
+  return <div className="page papers-page">
+    <section className="paper-layout">
+      <aside className="panel paper-list"><div className="panel-head"><div><h3>考试试卷</h3><p>查看每次考试的完整试题</p></div></div>{exams.map(exam => <button key={exam.id} className={exam.id === examId ? 'active' : ''} onClick={() => setExamId(exam.id)}><BookOpenCheck size={18} /><div><strong>{exam.title}</strong><small>{exam.questions.length} 题 · {fmtDate(exam.createdAt)}</small></div><Status value={exam.status} /></button>)}</aside>
+      <section className="panel paper-view">{current ? <><div className="paper-title"><div><h2>{current.title}</h2><p>{current.description || '无考试说明'}</p></div></div><PaperContent exam={current} /></> : <Empty>暂无考试试卷</Empty>}</section>
+    </section>
   </div>
 }
 
@@ -259,16 +306,17 @@ function LoginPage({ onLogin }) {
       setLoading(false)
     }
   }
-  return <div className="login-shell"><form className="login-card" onSubmit={submit}><Logo /><div className="login-title"><LockKeyhole size={22} /><div><h1>管理员登录</h1><p>请输入账号和密码进入后台</p></div></div><label><span>账号</span><input value={form.username} onChange={event => setForm({ ...form, username: event.target.value })} /></label><label><span>密码</span><input type="password" value={form.password} onChange={event => setForm({ ...form, password: event.target.value })} /></label>{error ? <div className="form-error">{error}</div> : null}<button className="primary" disabled={loading}>{loading ? '登录中...' : '登录'}</button><small>默认账号 admin，默认密码 123456。可通过 ADMIN_USER / ADMIN_PASS 修改。</small></form></div>
+  return <div className="login-shell"><form className="login-card" onSubmit={submit}><Logo /><div className="login-title"><LockKeyhole size={22} /><div><h1>管理员登录</h1><p>请输入账号和密码进入后台</p></div></div><label><span>账号</span><input value={form.username} onChange={event => setForm({ ...form, username: event.target.value })} /></label><label><span>密码</span><input type="password" value={form.password} onChange={event => setForm({ ...form, password: event.target.value })} /></label>{error ? <div className="form-error">{error}</div> : null}<button className="primary" disabled={loading}>{loading ? '登录中...' : '登录'}</button><small>默认账号 admin / invigilator / analyst，默认密码 123456。可通过 ADMIN_USERS 配置更多登录人员。</small></form></div>
 }
 
 function AdminApp() {
-  const [data, setData] = useState({ exams: [], submissions: [], candidates: [], lanAddresses: [] })
+  const [data, setData] = useState({ exams: [], submissions: [], candidates: [], operators: [], currentUser: null, lanAddresses: [] })
   const [active, setActive] = useState('dashboard')
   const [loading, setLoading] = useState(true)
   const [authenticated, setAuthenticated] = useState(false)
   const [sidebar, setSidebar] = useState(false)
   const [qrExam, setQrExam] = useState(null)
+  const [paperExam, setPaperExam] = useState(null)
   const [creating, setCreating] = useState(false)
   const [addingCandidate, setAddingCandidate] = useState(false)
   const load = async () => { const next = await api('/api/bootstrap'); setData(next); setAuthenticated(true); setLoading(false) }
@@ -283,11 +331,12 @@ function AdminApp() {
   const removeExam = async exam => { if (!confirm(`确定删除“${exam.title}”？相关成绩也会一起删除。`)) return; await api(`/api/exams/${exam.id}`, { method: 'DELETE' }); load() }
   const saveCandidate = async candidate => { await api(`/api/candidates/${candidate.id}`, { method: 'PATCH', body: JSON.stringify(candidate) }); load() }
   const removeCandidate = async candidate => { if (!confirm(`确定删除考生“${candidate.name}”？历史成绩会保留在成绩汇总中。`)) return; await api(`/api/candidates/${candidate.id}`, { method: 'DELETE' }); load() }
-  const logout = async () => { await api('/api/logout', { method: 'POST' }); setAuthenticated(false); setData({ exams: [], submissions: [], candidates: [], lanAddresses: [] }) }
-  const titles = { dashboard: '工作台', exams: '考试管理', results: '成绩汇总', candidates: '考生管理' }
+  const switchUser = async username => { await api('/api/session/operator', { method: 'POST', body: JSON.stringify({ username }) }); load() }
+  const logout = async () => { await api('/api/logout', { method: 'POST' }); setAuthenticated(false); setData({ exams: [], submissions: [], candidates: [], operators: [], currentUser: null, lanAddresses: [] }) }
+  const titles = { dashboard: '工作台', exams: '考试管理', papers: '考试试卷', results: '成绩汇总', candidates: '考生管理' }
   if (loading) return <div className="loading"><RefreshCw size={22} />正在载入...</div>
   if (!authenticated) return <LoginPage onLogin={load} />
-  return <div className="app-shell"><Sidebar active={active} setActive={setActive} open={sidebar} close={() => setSidebar(false)} onLogout={logout} /><main><Header title={titles[active]} onMenu={() => setSidebar(true)} onCreate={() => setCreating(true)} />{active === 'dashboard' ? <Dashboard exams={data.exams} submissions={data.submissions} onNavigate={setActive} onQr={setQrExam} /> : active === 'exams' ? <Exams exams={data.exams} submissions={data.submissions} onQr={setQrExam} onToggle={toggle} onCreate={() => setCreating(true)} onDelete={removeExam} /> : active === 'results' ? <Results exams={data.exams} submissions={data.submissions} /> : <Candidates candidates={data.candidates} submissions={data.submissions} onAdd={() => setAddingCandidate(true)} onSave={saveCandidate} onDelete={removeCandidate} />}</main>{qrExam ? <QrModal exam={qrExam} network={data} onClose={() => setQrExam(null)} /> : null}{creating ? <CreateExam onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load(); setActive('exams') }} /> : null}{addingCandidate ? <CandidateModal onClose={() => setAddingCandidate(false)} onCreated={() => { setAddingCandidate(false); load() }} /> : null}</div>
+  return <div className="app-shell"><Sidebar active={active} setActive={setActive} open={sidebar} close={() => setSidebar(false)} onLogout={logout} user={data.currentUser} operators={data.operators || []} onSwitchUser={switchUser} /><main><Header title={titles[active]} onMenu={() => setSidebar(true)} onCreate={() => setCreating(true)} />{active === 'dashboard' ? <Dashboard exams={data.exams} submissions={data.submissions} onNavigate={setActive} onQr={setQrExam} /> : active === 'exams' ? <Exams exams={data.exams} submissions={data.submissions} onQr={setQrExam} onToggle={toggle} onCreate={() => setCreating(true)} onDelete={removeExam} onViewPaper={setPaperExam} /> : active === 'papers' ? <Papers exams={data.exams} /> : active === 'results' ? <Results exams={data.exams} submissions={data.submissions} /> : <Candidates candidates={data.candidates} submissions={data.submissions} onAdd={() => setAddingCandidate(true)} onSave={saveCandidate} onDelete={removeCandidate} />}</main>{qrExam ? <QrModal exam={qrExam} network={data} onClose={() => setQrExam(null)} /> : null}{paperExam ? <PaperModal exam={paperExam} onClose={() => setPaperExam(null)} /> : null}{creating ? <CreateExam onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load(); setActive('exams') }} /> : null}{addingCandidate ? <CandidateModal onClose={() => setAddingCandidate(false)} onCreated={() => { setAddingCandidate(false); load() }} /> : null}</div>
 }
 
 function CandidateApp({ examId }) {
